@@ -13,6 +13,7 @@ using PlayFab.Internal;
 using static UnityEngine.EventSystems.EventTrigger;
 using UnityEditor.PackageManager;
 using PlayFab.AuthenticationModels;
+using PlayFab.CloudScriptModels;
 
 public class PlayFabLogin : MonoBehaviour
 {
@@ -23,6 +24,13 @@ public class PlayFabLogin : MonoBehaviour
     
    
     private EntityKey groupAdminEntity;
+
+    [System.Serializable]
+    public class PlayerData
+    {
+        public string getPlayerUsername;
+    }
+
 
     public void RegisterButton()
     {
@@ -35,7 +43,7 @@ public class PlayFabLogin : MonoBehaviour
             Username = usernameInput.text,
             Email = emailInput.text,
             Password = passwordInput.text,
-            RequireBothUsernameAndEmail = false
+            RequireBothUsernameAndEmail = true
         };
         PlayFabClientAPI.RegisterPlayFabUser(request, OnRegisterSucess,OnError);
     }
@@ -47,6 +55,7 @@ public class PlayFabLogin : MonoBehaviour
     {
         var request = new LoginWithEmailAddressRequest
         {
+            
             Email = emailInput.text,
             Password = passwordInput.text
         };
@@ -54,30 +63,76 @@ public class PlayFabLogin : MonoBehaviour
     }
     void OnLoginSuccess(LoginResult result)
     {
+
         PlayFab.ClientModels.EntityKey playerEntity;
         playerEntity = result.EntityToken.Entity;
-        messageText.text = "Logged in!";
+        messageText.text = result.ToJson();
+        Debug.Log(result.ToJson());
         var jsonConverter = PluginManager.GetPlugin<ISerializerPlugin>(PluginContract.PlayFab_Serializer);
         groupAdminEntity = jsonConverter.DeserializeObject<PlayFab.GroupsModels.EntityKey>(jsonConverter.SerializeObject(playerEntity));
         Debug.Log(groupAdminEntity.ToJson());
 
-        var request = new ExecuteCloudScriptRequest
+        
+    
+
+    var AddMem = new ExecuteCloudScriptRequest()
         {
-            FunctionName = "addMembers",
-            FunctionParameter = new 
+            FunctionName = "addMember",
+            FunctionParameter = new
             {
                 GroupId = "77569033BA83F38B",
-                MemberIDs = groupAdminEntity.Id.ToString()
             },
-            GeneratePlayStreamEvent = true
+            //GeneratePlayStreamEvent = true
         };
-        PlayFabClientAPI.ExecuteCloudScript(request, OnExecureSuccess, OnError);
+
+        PlayFabClientAPI.ExecuteCloudScript(AddMem, OnAddMemberSuccess, OnAddMemberFailure);
+
+
+
+    var GetNa = new ExecuteCloudScriptRequest()
+        {
+            FunctionName = "getPlayerAccountInfo"
+        };
+
+        PlayFabClientAPI.ExecuteCloudScript(GetNa, OnExecureSuccess, OnError);
     }
 
-    private void OnExecureSuccess(ExecuteCloudScriptResult result)
+    private void OnAddMemberSuccess(PlayFab.ClientModels.ExecuteCloudScriptResult result)
     {
-        Debug.Log(result);
-        Debug.Log(result.FunctionResult);
+        Debug.Log("Member added to group successfully." + result.ToJson());
+    }
+
+    private void OnAddMemberFailure(PlayFabError error)
+    {
+        Debug.LogError("Error adding member to group: " + error.ErrorMessage);
+    }
+
+
+
+    //ESTA SI QUE VA PORQUEEEEEEEE!!!!!!
+    /*var request = new ExecuteCloudScriptRequest()
+    {
+        FunctionName = "hello",
+    };
+    PlayFabClientAPI.ExecuteCloudScript(request, OnExecureSuccess, OnError);*/
+
+   
+void OnExecureSuccess(PlayFab.ClientModels.ExecuteCloudScriptResult result)
+    {
+
+        //Debug.Log(result.FunctionResult);
+
+
+
+        string jsonString = result.FunctionResult.ToString();
+
+        PlayerData playerData = JsonUtility.FromJson<PlayerData>(jsonString);
+
+        string username = playerData.getPlayerUsername;
+
+        Debug.Log(username); // output: "prueba1"
+
+
     }
 
 

@@ -4191,6 +4191,7 @@ namespace PlayFab.ClientModels
         /// title has been selected.
         /// </summary>
         public string TitleId;
+
     }
 
     [Serializable]
