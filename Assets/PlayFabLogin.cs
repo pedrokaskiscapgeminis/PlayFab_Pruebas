@@ -50,6 +50,18 @@ public class PlayFabLogin : MonoBehaviour
     void OnRegisterSucess(RegisterPlayFabUserResult result)
     {
         messageText.text = "Registered and logged in!";
+
+        var AddMem = new ExecuteCloudScriptRequest()
+        {
+            FunctionName = "addMember",
+            FunctionParameter = new
+            {
+                GroupId = "77569033BA83F38B",
+            },
+            //GeneratePlayStreamEvent = true
+        };
+
+        PlayFabClientAPI.ExecuteCloudScript(AddMem, OnAddMemberSuccess, OnAddMemberFailure);
     }
     public void LoginButton()
     {
@@ -72,29 +84,27 @@ public class PlayFabLogin : MonoBehaviour
         groupAdminEntity = jsonConverter.DeserializeObject<PlayFab.GroupsModels.EntityKey>(jsonConverter.SerializeObject(playerEntity));
         Debug.Log(groupAdminEntity.ToJson());
 
-        
-    
 
-    var AddMem = new ExecuteCloudScriptRequest()
+
+        var GetNa = new ExecuteCloudScriptRequest()
+            {
+                FunctionName = "getPlayerAccountInfoUsername"
+        };
+
+        PlayFabClientAPI.ExecuteCloudScript(GetNa, OnExecuteSuccess, OnError);
+
+
+        var ConfirmRole = new ExecuteCloudScriptRequest()
         {
-            FunctionName = "addMember",
+            FunctionName = "checkRole",
             FunctionParameter = new
             {
-                GroupId = "77569033BA83F38B",
-            },
-            //GeneratePlayStreamEvent = true
+                //PlayerId = "41400E351DF025C9",
+                GroupId = "77569033BA83F38B"
+            }
         };
 
-        PlayFabClientAPI.ExecuteCloudScript(AddMem, OnAddMemberSuccess, OnAddMemberFailure);
-
-
-
-    var GetNa = new ExecuteCloudScriptRequest()
-        {
-            FunctionName = "getPlayerAccountInfo"
-        };
-
-        PlayFabClientAPI.ExecuteCloudScript(GetNa, OnExecureSuccess, OnError);
+        PlayFabClientAPI.ExecuteCloudScript(ConfirmRole, OnAdmin, OnError);
     }
 
     private void OnAddMemberSuccess(PlayFab.ClientModels.ExecuteCloudScriptResult result)
@@ -102,22 +112,30 @@ public class PlayFabLogin : MonoBehaviour
         Debug.Log("Member added to group successfully." + result.ToJson());
     }
 
+    private void OnAdmin(PlayFab.ClientModels.ExecuteCloudScriptResult result)
+    {
+        Debug.Log("Role Admin:"+result.ToJson());
+    }
+
     private void OnAddMemberFailure(PlayFabError error)
     {
         Debug.LogError("Error adding member to group: " + error.ErrorMessage);
     }
 
-
+    private void OnMemberSuccess(IsMemberResponse result)
+    {
+        Debug.Log("This member is admin:"+result.ToJson());
+    }
 
     //ESTA SI QUE VA PORQUEEEEEEEE!!!!!!
     /*var request = new ExecuteCloudScriptRequest()
     {
         FunctionName = "hello",
     };
-    PlayFabClientAPI.ExecuteCloudScript(request, OnExecureSuccess, OnError);*/
+    PlayFabClientAPI.ExecuteCloudScript(request, OnExecuteSuccess, OnError);*/
 
    
-void OnExecureSuccess(PlayFab.ClientModels.ExecuteCloudScriptResult result)
+void OnExecuteSuccess(PlayFab.ClientModels.ExecuteCloudScriptResult result)
     {
 
         //Debug.Log(result.FunctionResult);
