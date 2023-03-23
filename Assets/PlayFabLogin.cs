@@ -105,6 +105,11 @@ public class PlayFabLogin : MonoBehaviour
         };
 
         PlayFabClientAPI.ExecuteCloudScript(ConfirmRole, OnAdmin, OnError);
+
+        ManageData data = new ManageData();
+        //data.SaveData();
+        data.LoadData();
+
     }
 
     private void OnAddMemberSuccess(PlayFab.ClientModels.ExecuteCloudScriptResult result)
